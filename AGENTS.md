@@ -11,17 +11,19 @@ For all limits and quotas, retrieve from the product's `/platform/limits/` page.
 
 ## Commands
 
+Use **bun** as the package manager and script runner (`bun add`, `bun remove`, `bun run`, `bunx`). Do not use npm, npx, pnpm, or yarn.
+
 | Command | Purpose |
 |---------|---------|
-| `npx wrangler dev` | Local development |
-| `npx wrangler deploy` | Deploy to Cloudflare |
-| `npx wrangler types` | Generate TypeScript types |
+| `bunx wrangler dev` | Local development |
+| `bunx wrangler deploy` | Deploy to Cloudflare |
+| `bunx wrangler types` | Generate TypeScript types |
 
 Run `wrangler types` after changing bindings in wrangler.jsonc.
 
 ## Local Explorer (Debugging & Inspection)
 
-When running `npx wrangler dev`, a Local Explorer API is available for inspecting and debugging local Workers, bindings, and storage state. The API base URL is printed in the terminal when the dev server starts.
+When running `bunx wrangler dev`, a Local Explorer API is available for inspecting and debugging local Workers, bindings, and storage state. The API base URL is printed in the terminal when the dev server starts.
 
 Key endpoints (relative to the dev server URL):
 
