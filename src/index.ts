@@ -18,7 +18,16 @@ import {
 	TENANCY_CONDITIONS,
 	UNIT_FEATURES,
 } from "./catalog";
-import { autocomplete, compactListing, fetchNextData, placeQuery, type Query, rentalSearchUrl } from "./propertyguru";
+import {
+	autocomplete,
+	compactListing,
+	fetchNextData,
+	listingDetail,
+	listingUrl,
+	placeQuery,
+	type Query,
+	rentalSearchUrl,
+} from "./propertyguru";
 
 const readOnly = { readOnlyHint: true, openWorldHint: true } as const;
 
@@ -199,6 +208,20 @@ function createServer() {
 				listings: pageData.data.listingsData.flatMap((x: any) => (x.listingData ? [compactListing(x.listingData)] : [])),
 			});
 		},
+	);
+
+	server.registerTool(
+		"get_listing",
+		{
+			title: "Get listing",
+			description:
+				"Get full details of one PropertyGuru listing: description, unit details and tenancy rules, facilities, project info, nearby MRT stations and schools, agent, photos and floor plans.",
+			inputSchema: z.object({
+				listingId: z.number().int().positive().describe("Listing `id` from search_rentals, or the number at the end of a listing URL."),
+			}),
+			annotations: readOnly,
+		},
+		async ({ listingId }) => json(listingDetail((await fetchNextData(listingUrl(listingId))).props.pageProps.pageData.data)),
 	);
 
 	return server;

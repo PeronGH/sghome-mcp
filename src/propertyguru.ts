@@ -95,6 +95,10 @@ export function rentalSearchUrl(query: Query): string {
 	return `${SITE}/property-for-rent?${params}`;
 }
 
+export function listingUrl(id: number): string {
+	return `${SITE}/listing/${id}`;
+}
+
 export async function fetchNextData(url: string): Promise<any> {
 	// Cloudflare challenges paginated/sorted searches that arrive without an on-site Referer.
 	const res = await fetch(url, { headers: { Referer: `${SITE}/` } });
@@ -135,5 +139,62 @@ export function compactListing(l: any) {
 		verified: l.isVerified,
 		agent: l.agent?.name,
 		agency: l.agency?.name,
+	};
+}
+
+export function listingDetail(data: any) {
+	const d = data.listingDetail;
+	const u = d.unitDetails ?? {};
+	const project = d.project?.metaByType?.verified;
+	const sqft = (size: any[] | undefined) => size?.find((s) => s.uom === "sqft")?.value;
+	const photo = (m: any) => m.urlTemplate.replace("${viewType}", "V800");
+	return {
+		id: d.id,
+		url: d.urls?.listing?.desktop,
+		status: d.statusCode,
+		title: d.title?.en,
+		headline: d.headlines?.[0]?.text,
+		price: d.price?.min,
+		priceText: d.price?.formatted,
+		priceQualifier: d.price?.type?.text ?? undefined,
+		psf: d.price?.perArea?.floor?.[0]?.text,
+		propertyType: data.listingData?.propertyType,
+		rentalType: u.rentalType?.description,
+		bedrooms: u.configuration?.bedrooms?.value ?? undefined,
+		bathrooms: u.configuration?.bathrooms?.value ?? undefined,
+		floorAreaSqft: sqft(u.dimensions?.floor?.size),
+		roomSizeSqft: sqft(u.dimensions?.room?.size),
+		address: d.location?.address?.formatted,
+		postalCode: d.location?.address?.postalCode ?? undefined,
+		district: data.listingData?.districtCode || undefined,
+		coordinates: d.location?.point && { lat: d.location.point.lat, lng: d.location.point.lon },
+		details: data.detailsData?.metatable?.items?.map((i: any) => i.value),
+		description: d.descriptions?.[0]?.text,
+		facilities: data.facilitiesData?.data?.map((f: any) => f.text.trim()),
+		project: project && {
+			name: project.name,
+			completionYear: project.completionYear ?? undefined,
+			totalUnits: project.totalUnits ?? undefined,
+			floors: project.floors ?? undefined,
+		},
+		nearbyMrt: d.pointOfInterest?.mrt?.map((m: any) => ({
+			name: m.name,
+			walkingDistanceKm: m.walkingDistanceKm,
+			walkingMins: m.walkingDurationMins,
+		})),
+		nearbySchools: d.pointOfInterest?.schools?.slice(0, 5).map((s: any) => ({
+			name: s.name,
+			type: s.subcategory,
+			walkingDistanceKm: s.walkingDistanceKm,
+		})),
+		firstPosted: d.dates?.firstPosted?.date,
+		lastPosted: d.dates?.lastPosted?.date,
+		agent: d.lister?.metaByType?.agent && {
+			name: d.lister.metaByType.agent.name,
+			license: d.lister.metaByType.agent.license,
+			agency: d.organization?.name,
+		},
+		photos: d.media?.listingImages?.slice(0, 10).map(photo),
+		floorPlans: d.media?.listingFloorPlans?.map(photo),
 	};
 }
