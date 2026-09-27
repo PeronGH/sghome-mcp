@@ -190,7 +190,7 @@ function createServer() {
 			title: "Search rentals",
 			description:
 				"Search residential rental listings on PropertyGuru Singapore. Returns 20 listings per page with the total count and a link to the same search on propertyguru.com.sg. " +
-				"Use one location selector (districts, hdbEstates, areas, mrtStations or place); omit all for island-wide. Multi-value filters match any of the values.",
+				"Use one location selector (districts, hdbEstates, areas, mrtStations or place); omit all for island-wide. Multi-value filters match any of the values. Use get_listing for full details and the lister's phone/WhatsApp.",
 			inputSchema: searchSchema,
 			annotations: readOnly,
 		},
@@ -215,7 +215,8 @@ function createServer() {
 		{
 			title: "Get listing",
 			description:
-				"Get full details of one PropertyGuru listing: description, unit details and tenancy rules, facilities, project info, nearby MRT stations and schools, agent, photos and floor plans.",
+				"Get full details of one PropertyGuru listing: description, unit details and tenancy rules, facilities, project info, nearby MRT stations and schools, photos and floor plans, " +
+				"and the lister's contact (name, phone, WhatsApp link with a prefilled enquiry, CEA licence, agency). Share the contact with the user when they want to enquire or view.",
 			inputSchema: z.object({
 				listingId: z.number().int().positive().describe("Listing `id` from search_rentals, or the number at the end of a listing URL."),
 			}),

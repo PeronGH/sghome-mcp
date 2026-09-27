@@ -146,6 +146,10 @@ export function listingDetail(data: any) {
 	const d = data.listingDetail;
 	const u = d.unitDetails ?? {};
 	const project = d.project?.metaByType?.verified;
+	const card = data.contactAgentData?.contactAgentCard;
+	const lister = card?.agentInfoProps?.agent;
+	const phone: string | undefined = lister?.mobile || undefined;
+	const whatsappHref: string | undefined = card?.contactActions?.find((a: any) => a.type === "whatsapp")?.href;
 	const sqft = (size: any[] | undefined) => size?.find((s) => s.uom === "sqft")?.value;
 	const photo = (m: any) => m.urlTemplate.replace("${viewType}", "V800");
 	return {
@@ -189,10 +193,14 @@ export function listingDetail(data: any) {
 		})),
 		firstPosted: d.dates?.firstPosted?.date,
 		lastPosted: d.dates?.lastPosted?.date,
-		agent: d.lister?.metaByType?.agent && {
-			name: d.lister.metaByType.agent.name,
-			license: d.lister.metaByType.agent.license,
-			agency: d.organization?.name,
+		contact: lister && {
+			name: lister.name,
+			listerType: d.lister?.type,
+			phone,
+			whatsappUrl: phone && whatsappHref?.replace("{{phone}}", phone.replace(/\D/g, "")),
+			license: d.lister?.metaByType?.agent?.license,
+			agency: d.organization?.name ?? card.agency?.name,
+			profileUrl: lister.profileUrl && new URL(lister.profileUrl.split("#")[0], SITE).href,
 		},
 		photos: d.media?.listingImages?.slice(0, 10).map(photo),
 		floorPlans: d.media?.listingFloorPlans?.map(photo),
