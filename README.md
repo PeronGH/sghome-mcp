@@ -2,6 +2,8 @@
 
 A stateless [MCP](https://modelcontextprotocol.io/) server on Cloudflare Workers for searching Singapore residential rentals on [PropertyGuru](https://www.propertyguru.com.sg/property-for-rent).
 
+Search and listing pages are fetched through [Kitesurf](https://kitesurf.dev) (Cloudflare's headless browser), because PropertyGuru challenges direct requests from Workers. Location lookup calls PropertyGuru's autocomplete API directly.
+
 ## Tools
 
 | Tool | Purpose |

@@ -99,9 +99,20 @@ export function listingUrl(id: number): string {
 	return `${SITE}/listing/${id}`;
 }
 
+const KITESURF = "https://kitesurf.dev/html";
+
+// PropertyGuru challenges direct requests from Workers, so pages are fetched through Kitesurf.
+// Blocking scripts and assets returns the server-rendered HTML untouched by hydration, and quickly.
 export async function fetchNextData(url: string): Promise<any> {
-	// Cloudflare challenges paginated/sorted searches that arrive without an on-site Referer.
-	const res = await fetch(url, { headers: { Referer: `${SITE}/` } });
+	const res = await fetch(KITESURF, {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({
+			url,
+			gotoOptions: { waitUntil: "domcontentloaded" },
+			rejectResourceTypes: ["script", "image", "stylesheet", "font", "media", "xhr", "fetch"],
+		}),
+	});
 	const chunks: string[] = [];
 	await new HTMLRewriter()
 		.on("script#__NEXT_DATA__", {
@@ -111,7 +122,8 @@ export async function fetchNextData(url: string): Promise<any> {
 		})
 		.transform(res)
 		.body!.pipeTo(new WritableStream());
-	if (chunks.length === 0) throw new Error(`No page data in PropertyGuru response (HTTP ${res.status}) for ${url}`);
+	// Kitesurf answers 200 for any loaded page, so a missing listing shows up only as absent page data.
+	if (chunks.length === 0) throw new Error(`No page data for ${url} (Kitesurf HTTP ${res.status}); the page may not exist`);
 	return JSON.parse(chunks.join(""));
 }
 
