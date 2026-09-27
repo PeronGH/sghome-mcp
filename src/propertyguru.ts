@@ -202,7 +202,7 @@ export function listingDetail(data: any) {
 			agency: d.organization?.name ?? card.agency?.name,
 			profileUrl: lister.profileUrl && new URL(lister.profileUrl.split("#")[0], SITE).href,
 		},
-		photos: d.media?.listingImages?.slice(0, 10).map(photo),
+		photos: d.media?.listingImages?.map((m: any) => ({ url: photo(m), caption: m.caption ?? undefined })),
 		floorPlans: d.media?.listingFloorPlans?.map(photo),
 	};
 }

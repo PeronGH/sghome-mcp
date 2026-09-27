@@ -215,7 +215,7 @@ function createServer() {
 		{
 			title: "Get listing",
 			description:
-				"Get full details of one PropertyGuru listing: description, unit details and tenancy rules, facilities, project info, nearby MRT stations and schools, photos and floor plans, " +
+				"Get full details of one PropertyGuru listing: description, unit details and tenancy rules, facilities, project info, nearby MRT stations and schools, captioned photo and floor plan URLs (directly viewable), " +
 				"and the lister's contact (name, phone, WhatsApp link with a prefilled enquiry, CEA licence, agency). Share the contact with the user when they want to enquire or view.",
 			inputSchema: z.object({
 				listingId: z.number().int().positive().describe("Listing `id` from search_rentals, or the number at the end of a listing URL."),
