@@ -1,6 +1,8 @@
 import { PLACE_TYPES } from "./catalog";
 
 const SITE = "https://www.propertyguru.com.sg";
+const IMAGE_CDN = "https://sg1-cdn.pgimgs.com";
+export const IMAGE_ROUTE = "/images";
 const AUTOCOMPLETE = "https://autocomplete.propertyguru.com/v1/search";
 
 export type PlaceType = (typeof PLACE_TYPES)[number];
@@ -99,6 +101,15 @@ export function listingUrl(id: number): string {
 	return `${SITE}/listing/${id}`;
 }
 
+// Many agent sandboxes cannot reach PropertyGuru's image CDN, so listing photos are served through this Worker.
+// Concatenating (rather than resolving) keeps every request on IMAGE_CDN, even for paths like "//other.host".
+export async function proxyImage(path: string): Promise<Response> {
+	const res = await fetch(IMAGE_CDN + path);
+	const headers = new Headers({ "content-type": res.headers.get("content-type") ?? "application/octet-stream" });
+	if (res.ok) headers.set("cache-control", "public, max-age=86400, immutable");
+	return new Response(res.body, { status: res.status, headers });
+}
+
 const KITESURF = "https://kitesurf.dev/html";
 
 // PropertyGuru challenges direct requests from Workers, so pages are fetched through Kitesurf.
@@ -154,7 +165,7 @@ export function compactListing(l: any) {
 	};
 }
 
-export function listingDetail(data: any) {
+export function listingDetail(data: any, origin: string) {
 	const d = data.listingDetail;
 	const u = d.unitDetails ?? {};
 	const project = d.project?.metaByType?.verified;
@@ -163,7 +174,8 @@ export function listingDetail(data: any) {
 	const phone: string | undefined = lister?.mobile || undefined;
 	const whatsappHref: string | undefined = card?.contactActions?.find((a: any) => a.type === "whatsapp")?.href;
 	const sqft = (size: any[] | undefined) => size?.find((s) => s.uom === "sqft")?.value;
-	const photo = (m: any) => m.urlTemplate.replace("${viewType}", "V800");
+	const photo = (m: any) =>
+		m.urlTemplate.replace("${viewType}", "V800").replace(IMAGE_CDN, `${origin}${IMAGE_ROUTE}`) as string;
 	return {
 		id: d.id,
 		url: d.urls?.listing?.desktop,

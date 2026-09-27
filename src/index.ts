@@ -1,4 +1,4 @@
-import { McpServer } from "@modelcontextprotocol/server";
+import { McpServer, type McpRequestContext } from "@modelcontextprotocol/server";
 import { createMcpHandler } from "agents/mcp/server";
 import { z } from "zod";
 import {
@@ -22,9 +22,11 @@ import {
 	autocomplete,
 	compactListing,
 	fetchNextData,
+	IMAGE_ROUTE,
 	listingDetail,
 	listingUrl,
 	placeQuery,
+	proxyImage,
 	type Query,
 	rentalSearchUrl,
 } from "./propertyguru";
@@ -163,7 +165,8 @@ function buildQuery(a: SearchInput): Query {
 	return q;
 }
 
-function createServer() {
+function createServer({ requestInfo }: McpRequestContext) {
+	const origin = new URL(requestInfo!.url).origin;
 	const server = new McpServer({ name: "sghome", version: "0.1.0" });
 
 	server.registerTool(
@@ -222,7 +225,8 @@ function createServer() {
 			}),
 			annotations: readOnly,
 		},
-		async ({ listingId }) => json(listingDetail((await fetchNextData(listingUrl(listingId))).props.pageProps.pageData.data)),
+		async ({ listingId }) =>
+			json(listingDetail((await fetchNextData(listingUrl(listingId))).props.pageProps.pageData.data, origin)),
 	);
 
 	return server;
@@ -232,6 +236,8 @@ const handler = createMcpHandler(createServer);
 
 export default {
 	fetch(request, env, ctx) {
+		const { pathname } = new URL(request.url);
+		if (pathname.startsWith(`${IMAGE_ROUTE}/`)) return proxyImage(pathname.slice(IMAGE_ROUTE.length));
 		return handler(request, env, ctx);
 	},
 } satisfies ExportedHandler<Env>;
