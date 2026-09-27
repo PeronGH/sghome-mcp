@@ -30,6 +30,7 @@ import {
 	type Query,
 	rentalSearchUrl,
 } from "./propertyguru";
+import { districtLabel, rentalContracts, resolveProjects, URA_PROPERTY_TYPES } from "./ura";
 
 const readOnly = { readOnlyHint: true, openWorldHint: true } as const;
 
@@ -227,6 +228,55 @@ function createServer({ requestInfo }: McpRequestContext) {
 		},
 		async ({ listingId }) =>
 			json(listingDetail((await fetchNextData(listingUrl(listingId))).props.pageProps.pageData.data, origin)),
+	);
+
+	server.registerTool(
+		"rental_contracts",
+		{
+			title: "Rental contracts (URA)",
+			description:
+				"Actual signed rents for private homes (condos, apartments, executive condos, landed; not HDB) from URA's record of rental contracts filed for stamp duty, updated monthly for the last 5 years. " +
+				"Use it to judge whether an asking rent from search_rentals/get_listing is fair: compare against contracts in the same project and bedroom count, and the listing's psf against medianRentPsf. " +
+				"Returns the contract count, URA's median rent per sqft, rent quartiles by bedroom count, and the 20 most recent contracts. Floor areas are bands, dates are lease start months.",
+			inputSchema: z.object({
+				projects: z
+					.array(z.string().min(1))
+					.min(1)
+					.max(5)
+					.optional()
+					.describe("Up to 5 project names, matched case-insensitively against URA's names (e.g. 'Icon', 'The Sail @ Marina Bay'). Unknown names return suggestions."),
+				district: z.enum(keys(DISTRICTS)).optional().describe("Postal district, instead of projects."),
+				propertyType: z
+					.enum(keys(URA_PROPERTY_TYPES))
+					.optional()
+					.describe("non_landed = condos and apartments, ec = executive condos. Defaults to non_landed for district searches; omit for projects."),
+				from: z
+					.string()
+					.regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+					.optional()
+					.describe("First lease-start month, YYYY-MM. Defaults to 12 months before `to`."),
+				to: z
+					.string()
+					.regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+					.optional()
+					.describe("Last lease-start month, YYYY-MM. Defaults to the latest month URA has published."),
+				minBedrooms: z.number().int().min(1).optional(),
+				maxBedrooms: z.number().int().min(1).optional(),
+				minRent: z.number().positive().optional().describe("Minimum monthly rent, SGD."),
+				maxRent: z.number().positive().optional().describe("Maximum monthly rent, SGD."),
+			}),
+			annotations: readOnly,
+		},
+		async ({ projects, district, propertyType, ...rest }) => {
+			if (!projects === !district) throw new Error("Pass exactly one of `projects` or `district`.");
+			const location: [string, ...string[]] = projects
+				? ["projectName", ...(await resolveProjects(projects))]
+				: ["postalDistrict", await districtLabel(district!)];
+			return json({
+				location: location.slice(1),
+				...(await rentalContracts({ location, propertyType: propertyType ?? (district ? "non_landed" : undefined), ...rest })),
+			});
+		},
 	);
 
 	return server;

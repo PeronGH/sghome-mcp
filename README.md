@@ -1,6 +1,6 @@
 # sghome-mcp
 
-A stateless [MCP](https://modelcontextprotocol.io/) server on Cloudflare Workers for searching Singapore residential rentals on [PropertyGuru](https://www.propertyguru.com.sg/property-for-rent).
+A stateless [MCP](https://modelcontextprotocol.io/) server on Cloudflare Workers for searching Singapore residential rentals on [PropertyGuru](https://www.propertyguru.com.sg/property-for-rent) and checking asking rents against actual signed contracts from [URA](https://eservice.ura.gov.sg/property-market-information/pmiResidentialRentalSearch).
 
 Search and listing pages are fetched through [Kitesurf](https://kitesurf.dev) (Cloudflare's headless browser), because PropertyGuru challenges direct requests from Workers. Location lookup calls PropertyGuru's autocomplete API directly.
 
@@ -10,6 +10,7 @@ Search and listing pages are fetched through [Kitesurf](https://kitesurf.dev) (C
 | --- | --- |
 | `resolve_location` | Look up MRT stations, schools, condos/HDB blocks, streets, districts, estates and neighbourhoods; returns a `place` to search around. |
 | `search_rentals` | Search rental listings by location, unit or room type, price, bedrooms, size, furnishing, availability, lease term, MRT distance and more. 20 results per page. |
+| `rental_contracts` | Actual rents from URA's private residential rental contracts (condos, ECs, landed; not HDB) by project or district: contract count, median rent psf, rent quartiles by bedrooms, recent contracts. |
 | `get_listing` | Full details of one listing: description, tenancy rules, facilities, nearby MRT/schools, captioned photos, floor plans, and the lister's phone and WhatsApp link. |
 
 ## Usage
